@@ -15,12 +15,12 @@ import {
 import toast from "react-hot-toast";
 
 const INPUT_LABELS = {
-  image: { label: "Image", icon: FiImage, color: "blue" },
-  text: { label: "Text", icon: FiType, color: "purple" },
-  multi_text: { label: "Multi-Text", icon: FiType, color: "purple" },
-  csv: { label: "CSV/Tabular", icon: FiGrid, color: "orange" },
-  numeric: { label: "Numeric", icon: FiHash, color: "green" },
-  json: { label: "JSON", icon: FiGrid, color: "teal" },
+  image: { label: "Image", icon: FiImage },
+  text: { label: "Text", icon: FiType },
+  multi_text: { label: "Multi-Text", icon: FiType },
+  csv: { label: "CSV/Tabular", icon: FiGrid },
+  numeric: { label: "Numeric", icon: FiHash },
+  json: { label: "JSON", icon: FiGrid },
 };
 
 const OUTPUT_LABELS = {
@@ -37,230 +37,74 @@ function getExamples(apiUrl, inputType) {
   switch (inputType) {
     case "image":
       examples.push({
-        title: "Python (Image File)",
-        code: `import requests
-
-with open("your_image.png", "rb") as f:
-    response = requests.post(
-        "${apiUrl}",
-        files={"image": ("image.png", f, "image/png")},
-        headers={"X-API-Key": "YOUR_API_KEY"},
-    )
-
-result = response.json()
-print(result)`,
+        title: "Python (requests)",
+        code: `import requests\n\nwith open("image.jpg", "rb") as f:\n    response = requests.post(\n        "${apiUrl}",\n        files={"image": ("image.jpg", f, "image/jpeg")},\n        headers={"X-API-Key": "YOUR_API_KEY"}\n    )\n\nprint(response.json())`
       });
       examples.push({
-        title: "Python (Base64)",
-        code: `import requests, base64
-
-with open("your_image.png", "rb") as f:
-    img_b64 = base64.b64encode(f.read()).decode()
-
-response = requests.post(
-    "${apiUrl}",
-    json={"image_base64": img_b64},
-    headers={"X-API-Key": "YOUR_API_KEY"}
-)
-print(response.json())`,
-      });
-      examples.push({
-        title: "Python (OpenCV Webcam - Realtime)",
-        code: `import cv2, requests, base64, numpy as np
-
-cap = cv2.VideoCapture(0)
-API_URL = "${apiUrl}"
-API_KEY = "YOUR_API_KEY"
-
-while True:
-    ret, frame = cap.read()
-    if not ret:
-        break
-
-    cv2.imshow("Webcam", frame)
-
-    key = cv2.waitKey(1) & 0xFF
-    if key == ord("p"):  # Press 'p' to predict
-        _, buffer = cv2.imencode(".jpg", frame)
-        img_b64 = base64.b64encode(buffer).decode()
-
-        response = requests.post(
-            API_URL,
-            json={"image_base64": img_b64},
-            headers={"X-API-Key": API_KEY}
-        )
-        result = response.json()
-        print(f"Prediction: {result}")
-
-    elif key == ord("q"):  # Press 'q' to quit
-        break
-
-cap.release()
-cv2.destroyAllWindows()`,
+        title: "JavaScript (fetch)",
+        code: `const formData = new FormData();\nformData.append("image", fileInput.files[0]);\n\nfetch("${apiUrl}", {\n  method: "POST",\n  headers: { "X-API-Key": "YOUR_API_KEY" },\n  body: formData\n})\n.then(response => response.json())\n.then(data => console.log(data));`
       });
       examples.push({
         title: "cURL",
-        code: `curl -X POST ${apiUrl} \\
-  -H "X-API-Key: YOUR_API_KEY" \\
-  -F "image=@your_image.png"`,
-      });
-      examples.push({
-        title: "JavaScript (Browser)",
-        code: `const formData = new FormData();
-formData.append("image", fileInput.files[0]);
-
-const response = await fetch("${apiUrl}", {
-  method: "POST",
-  headers: { "X-API-Key": "YOUR_API_KEY" },
-  body: formData,
-});
-
-const data = await response.json();
-console.log(data);`,
+        code: `curl -X POST "${apiUrl}" \\\n  -H "X-API-Key: YOUR_API_KEY" \\\n  -F "image=@image.jpg"`
       });
       break;
 
     case "text":
       examples.push({
-        title: "Python",
-        code: `import requests
-
-response = requests.post(
-    "${apiUrl}",
-    json={"text": "Your input text here"},
-    headers={"X-API-Key": "YOUR_API_KEY"}
-)
-print(response.json())`,
+        title: "Python (requests)",
+        code: `import requests\n\nresponse = requests.post(\n    "${apiUrl}",\n    json={"text": "Your input text"},\n    headers={"X-API-Key": "YOUR_API_KEY"}\n)\n\nprint(response.json())`
       });
       examples.push({
-        title: "cURL",
-        code: `curl -X POST ${apiUrl} \\
-  -H "Content-Type: application/json" \\
-  -H "X-API-Key: YOUR_API_KEY" \\
-  -d '{"text": "Your input text here"}'`,
-      });
-      examples.push({
-        title: "JavaScript",
-        code: `const response = await fetch("${apiUrl}", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    "X-API-Key": "YOUR_API_KEY",
-  },
-  body: JSON.stringify({ text: "Your input text here" }),
-});
-const data = await response.json();
-console.log(data);`,
+        title: "JavaScript (fetch)",
+        code: `fetch("${apiUrl}", {\n  method: "POST",\n  headers: {\n    "Content-Type": "application/json",\n    "X-API-Key": "YOUR_API_KEY"\n  },\n  body: JSON.stringify({ text: "Your input text" })\n})\n.then(response => response.json())\n.then(data => console.log(data));`
       });
       break;
 
     case "multi_text":
       examples.push({
-        title: "Python",
-        code: `import requests
-
-response = requests.post(
-    "${apiUrl}",
-    json={"texts": ["first text input", "second text input"]},
-    headers={"X-API-Key": "YOUR_API_KEY"}
-)
-print(response.json())`,
+        title: "Python (requests)",
+        code: `import requests\n\nresponse = requests.post(\n    "${apiUrl}",\n    json={"texts": ["Text one", "Text two"]},\n    headers={"X-API-Key": "YOUR_API_KEY"}\n)\n\nprint(response.json())`
+      });
+      examples.push({
+        title: "JavaScript (fetch)",
+        code: `fetch("${apiUrl}", {\n  method: "POST",\n  headers: {\n    "Content-Type": "application/json",\n    "X-API-Key": "YOUR_API_KEY"\n  },\n  body: JSON.stringify({ texts: ["Text one", "Text two"] })\n})\n.then(response => response.json())\n.then(data => console.log(data));`
       });
       break;
 
     case "csv":
       examples.push({
-        title: "Python (CSV File)",
-        code: `import requests
-
-with open("data.csv", "rb") as f:
-    response = requests.post(
-        "${apiUrl}",
-        files={"csv": ("data.csv", f, "text/csv")},
-        headers={"X-API-Key": "YOUR_API_KEY"},
-    )
-print(response.json())`,
+        title: "Python (requests)",
+        code: `import requests\n\nwith open("data.csv", "rb") as f:\n    response = requests.post(\n        "${apiUrl}",\n        files={"csv": ("data.csv", f, "text/csv")},\n        headers={"X-API-Key": "YOUR_API_KEY"}\n    )\n\nprint(response.json())`
       });
       examples.push({
-        title: "Python (CSV String)",
-        code: `import requests
-
-csv_data = """feature1,feature2,feature3
-1.0,2.0,3.0
-4.0,5.0,6.0"""
-
-response = requests.post(
-    "${apiUrl}",
-    json={"csv_data": csv_data},
-    headers={"X-API-Key": "YOUR_API_KEY"}
-)
-print(response.json())`,
-      });
-      examples.push({
-        title: "Python (Pandas DataFrame)",
-        code: `import requests
-import pandas as pd
-
-df = pd.read_csv("data.csv")
-
-response = requests.post(
-    "${apiUrl}",
-    json={"csv_data": df.to_csv(index=False)},
-    headers={"X-API-Key": "YOUR_API_KEY"}
-)
-print(response.json())`,
+        title: "JavaScript (fetch)",
+        code: `const formData = new FormData();\nformData.append("csv", fileInput.files[0]);\n\nfetch("${apiUrl}", {\n  method: "POST",\n  headers: { "X-API-Key": "YOUR_API_KEY" },\n  body: formData\n})\n.then(response => response.json())\n.then(data => console.log(data));`
       });
       break;
 
     case "json":
       examples.push({
-        title: "Python",
-        code: `import requests
-
-response = requests.post(
-    "${apiUrl}",
-    json={"data": [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]},
-    headers={"X-API-Key": "YOUR_API_KEY"}
-)
-print(response.json())`,
+        title: "Python (requests)",
+        code: `import requests\n\ndata = {"key": "value", "items": [1, 2, 3]}\n\nresponse = requests.post(\n    "${apiUrl}",\n    json={"data": data},\n    headers={"X-API-Key": "YOUR_API_KEY"}\n)\n\nprint(response.json())`
+      });
+      examples.push({
+        title: "JavaScript (fetch)",
+        code: `fetch("${apiUrl}", {\n  method: "POST",\n  headers: {\n    "Content-Type": "application/json",\n    "X-API-Key": "YOUR_API_KEY"\n  },\n  body: JSON.stringify({ data: { key: "value", items: [1, 2, 3] } })\n})\n.then(response => response.json())\n.then(data => console.log(data));`
       });
       break;
 
-    default: // numeric
+    default: // Numeric / Classification
       examples.push({
-        title: "Python",
-        code: `import requests
-
-response = requests.post(
-    "${apiUrl}",
-    json={"inputs": [1.0, 2.0, 3.0]},
-    headers={"X-API-Key": "YOUR_API_KEY"}
-)
-print(response.json())`,
+        title: "Python (requests)",
+        code: `import requests\n\n# Example inputs: [feature1, feature2, feature3]\ninputs = [0.5, 1.2, -0.3]\n\nresponse = requests.post(\n    "${apiUrl}",\n    json={"inputs": inputs},\n    headers={"X-API-Key": "YOUR_API_KEY"}\n)\n\nprint(response.json())`
       });
       examples.push({
-        title: "cURL",
-        code: `curl -X POST ${apiUrl} \\
-  -H "Content-Type: application/json" \\
-  -H "X-API-Key: YOUR_API_KEY" \\
-  -d '{"inputs": [1.0, 2.0, 3.0]}'`,
-      });
-      examples.push({
-        title: "JavaScript",
-        code: `const response = await fetch("${apiUrl}", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    "X-API-Key": "YOUR_API_KEY",
-  },
-  body: JSON.stringify({ inputs: [1.0, 2.0, 3.0] }),
-});
-const data = await response.json();
-console.log(data);`,
+        title: "JavaScript (fetch)",
+        code: `// Example inputs: [feature1, feature2, feature3]\nconst inputs = [0.5, 1.2, -0.3];\n\nfetch("${apiUrl}", {\n  method: "POST",\n  headers: {\n    "Content-Type": "application/json",\n    "X-API-Key": "YOUR_API_KEY"\n  },\n  body: JSON.stringify({ inputs: inputs })\n})\n.then(response => response.json())\n.then(data => console.log(data));`
       });
       break;
   }
-
   return examples;
 }
 
@@ -286,16 +130,14 @@ export default function ModelDetail() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-2 border-purple-600 border-t-transparent"></div>
       </div>
     );
   }
 
   if (!model) {
     return (
-      <div className="text-center py-20">
-        <p className="text-gray-500">Model not found.</p>
-      </div>
+      <div className="text-center py-20 text-gray-500">Model not found.</div>
     );
   }
 
@@ -307,120 +149,112 @@ export default function ModelDetail() {
   const examples = getExamples(apiUrl, inputType);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+    <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center gap-1 text-gray-500 hover:text-gray-700 mb-6 text-sm"
+        className="flex items-center gap-2 text-gray-400 hover:text-white mb-8 transition-colors"
       >
-        <FiArrowLeft /> Back
+        <FiArrowLeft /> Back to Dashboard
       </button>
 
       {/* Header */}
-      <div className="bg-white rounded-xl shadow-sm border p-8 mb-6">
-        <h1 className="text-3xl font-bold mb-2">{model.name}</h1>
-        {model.description && (
-          <p className="text-gray-600 mb-4">{model.description}</p>
-        )}
+      <div className="glass p-8 mb-8 relative overflow-hidden bg-white/5 border border-white/10 rounded-2xl">
+        <div className="absolute top-0 right-0 p-8 opacity-20 pointer-events-none">
+            <FiCpu className="text-9xl text-white"/>
+        </div>
 
-        <div className="flex flex-wrap gap-3 text-sm">
+        <h1 className="text-5xl font-bold text-white mb-6">{model.name}</h1>
+        
+        <div className="flex flex-wrap items-center gap-4 text-sm mb-6">
           {model.userId && (
-            <span className="flex items-center gap-1 text-gray-500">
-              <FiUser /> {model.userId.name}
+            <span className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-lg border border-white/10 text-gray-300">
+              <FiUser className="text-purple-400" /> {model.userId.name}
             </span>
           )}
-          <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full">
-            Input: {inputInfo.label}
+          <span className="flex items-center gap-2 bg-blue-500/10 px-4 py-2 rounded-lg border border-blue-500/20 text-blue-300">
+             Input: {inputInfo.label}
           </span>
-          <span className="bg-green-50 text-green-700 px-3 py-1 rounded-full">
-            Output: {OUTPUT_LABELS[outputType]}
+          <span className="flex items-center gap-2 bg-green-500/10 px-4 py-2 rounded-lg border border-green-500/20 text-green-300">
+             Output: {OUTPUT_LABELS[outputType]}
           </span>
-          <span className="flex items-center gap-1 text-gray-500">
-            <FiBarChart2 /> {model.usageCount || 0} predictions
+          <span className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-lg border border-white/10 text-gray-300">
+            <FiBarChart2 className="text-purple-400"/> {model.usageCount || 0} predictions
           </span>
         </div>
-      </div>
 
-      {/* API Endpoint */}
-      <div className="bg-white rounded-xl shadow-sm border p-8 mb-6">
-        <h2 className="text-xl font-semibold mb-4">API Endpoint</h2>
-
-        <div className="flex items-center gap-2 bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm">
-          <span className="flex-1">POST {apiUrl}</span>
-          <button
-            onClick={() => copyToClipboard(apiUrl)}
-            className="text-gray-400 hover:text-white"
-          >
-            <FiCopy />
-          </button>
-        </div>
-
-        {model.apiKey && (
-          <div className="mt-4">
-            <label className="text-sm font-medium text-gray-700">
-              Your API Key
-            </label>
-            <div className="flex items-center gap-2 bg-gray-900 text-yellow-400 p-4 rounded-lg font-mono text-sm mt-1">
-              <span className="flex-1 break-all">{model.apiKey}</span>
-              <button
-                onClick={() => copyToClipboard(model.apiKey)}
-                className="text-gray-400 hover:text-white"
-              >
-                <FiCopy />
-              </button>
-            </div>
-          </div>
+        {model.description && (
+          <p className="text-gray-400 text-lg max-w-3xl leading-relaxed">{model.description}</p>
         )}
       </div>
 
-      {/* Input Schema */}
-      {model.inputSchema && model.inputSchema.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border p-8 mb-6">
-          <h2 className="text-xl font-semibold mb-4">Input Schema</h2>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b">
-                <th className="text-left py-2 text-gray-500">#</th>
-                <th className="text-left py-2 text-gray-500">Name</th>
-                <th className="text-left py-2 text-gray-500">Type</th>
-                <th className="text-left py-2 text-gray-500">Description</th>
-              </tr>
-            </thead>
-            <tbody>
-              {model.inputSchema.map((field, i) => (
-                <tr key={i} className="border-b last:border-0">
-                  <td className="py-2 text-gray-400">{i + 1}</td>
-                  <td className="py-2 font-mono text-indigo-600">{field.name}</td>
-                  <td className="py-2 text-gray-600">{field.type}</td>
-                  <td className="py-2 text-gray-600">{field.description}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* Code Examples */}
-      <div className="bg-white rounded-xl shadow-sm border p-8">
-        <h2 className="text-xl font-semibold mb-4">Usage Examples</h2>
-
-        <div className="space-y-6">
-          {examples.map((ex, i) => (
-            <div key={i}>
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-semibold text-gray-700">{ex.title}</h3>
+      {/* Main Content - Vertical Stack for Full Width Boxes */}
+      <div className="flex flex-col gap-8">
+        
+        {/* 1. API Endpoint Section - Full Width */}
+        <div className="glass p-8 bg-white/5 border border-white/10 rounded-2xl w-full">
+            <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
+            <span className="w-1.5 h-6 bg-purple-500 rounded-full"/> API Endpoint
+            </h2>
+            
+            <div className="bg-black/40 border border-white/10 p-6 rounded-xl font-mono text-sm text-green-400 relative group mb-8">
+                {/* break-all ensures long URLs wrap properly */}
+                <div className="break-all whitespace-pre-wrap pr-12">
+                    POST {apiUrl}
+                </div>
                 <button
-                  onClick={() => copyToClipboard(ex.code)}
-                  className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1"
+                    onClick={() => copyToClipboard(apiUrl)}
+                    className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-lg text-gray-300 hover:text-white transition"
+                    title="Copy Endpoint"
                 >
-                  <FiCopy /> Copy
+                    <FiCopy />
                 </button>
-              </div>
-              <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
-                {ex.code}
-              </pre>
             </div>
-          ))}
+
+            {model.apiKey && (
+            <div>
+                <h3 className="text-sm font-semibold text-gray-400 mb-3 uppercase tracking-wider">Your API Key</h3>
+                <div className="bg-black/40 border border-white/10 p-6 rounded-xl font-mono text-sm text-yellow-400/90 relative group">
+                    <div className="break-all whitespace-pre-wrap pr-12 blur-[4px] group-hover:blur-none transition-all duration-300">
+                        {model.apiKey}
+                    </div>
+                    <button
+                        onClick={() => copyToClipboard(model.apiKey)}
+                        className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-lg text-gray-300 hover:text-white transition"
+                        title="Copy Key"
+                    >
+                        <FiCopy />
+                    </button>
+                </div>
+            </div>
+            )}
         </div>
+
+        {/* 2. Integration Code Section - Full Width */}
+        <div className="glass p-8 bg-white/5 border border-white/10 rounded-2xl w-full">
+            <h2 className="text-xl font-bold text-white mb-6">Integration Code</h2>
+            <div className="space-y-8">
+                {examples.map((ex, i) => (
+                    <div key={i} className="border border-white/10 rounded-xl overflow-hidden bg-black/20">
+                        <div className="bg-white/5 px-4 py-3 border-b border-white/10 flex justify-between items-center">
+                            <span className="text-sm font-semibold text-gray-300">{ex.title}</span>
+                            <button 
+                                onClick={() => copyToClipboard(ex.code)}
+                                className="text-xs font-medium text-purple-400 hover:text-purple-300 flex items-center gap-1.5 bg-purple-500/10 px-2 py-1 rounded transition-colors"
+                            >
+                                <FiCopy /> Copy
+                            </button>
+                        </div>
+                        <div className="p-6 bg-black/40">
+                            {/* whitespace-pre-wrap ensures code lines wrap if too long */}
+                            <pre className="text-sm text-gray-400 font-mono break-all whitespace-pre-wrap leading-relaxed">
+                                {ex.code}
+                            </pre>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+
       </div>
     </div>
   );

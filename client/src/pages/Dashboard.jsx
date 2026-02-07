@@ -1,10 +1,11 @@
+/* Dashboard.jsx */
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
 import ModelCard from "../components/ModelCard";
 import { useAuth } from "../context/AuthContext";
-import { FiPlus, FiTrash2 } from "react-icons/fi";
+import { FiPlus, FiTrash2, FiLayers, FiGlobe } from "react-icons/fi";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -47,51 +48,51 @@ export default function Dashboard() {
   const models = tab === "mine" ? myModels : allModels;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-      <div className="flex items-center justify-between mb-8">
+    <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-gray-500">Welcome back, {user.name}</p>
+          <h1 className="text-3xl font-bold text-white mb-2">Dashboard</h1>
+          <p className="text-gray-400">Welcome back, <span className="text-purple-400">{user.name}</span></p>
         </div>
         <Link
           to="/upload"
-          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700"
+          className="btn-primary flex items-center justify-center gap-2"
         >
           <FiPlus /> Upload Model
         </Link>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-lg w-fit mb-8">
+      <div className="inline-flex bg-white/5 p-1 rounded-xl border border-white/10 mb-8">
         <button
           onClick={() => setTab("mine")}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition ${
+          className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all ${
             tab === "mine"
-              ? "bg-white shadow text-gray-900"
-              : "text-gray-600 hover:text-gray-900"
+              ? "bg-purple-600 text-white shadow-lg shadow-purple-900/20"
+              : "text-gray-400 hover:text-white hover:bg-white/5"
           }`}
         >
-          My Models ({myModels.length})
+          <FiLayers /> My Models ({myModels.length})
         </button>
         <button
           onClick={() => setTab("all")}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition ${
+          className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all ${
             tab === "all"
-              ? "bg-white shadow text-gray-900"
-              : "text-gray-600 hover:text-gray-900"
+              ? "bg-purple-600 text-white shadow-lg shadow-purple-900/20"
+              : "text-gray-400 hover:text-white hover:bg-white/5"
           }`}
         >
-          All Models ({allModels.length})
+          <FiGlobe /> All Models ({allModels.length})
         </button>
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
+        <div className="flex justify-center py-20">
+          <div className="animate-spin rounded-full h-10 w-10 border-2 border-purple-500 border-t-transparent"></div>
         </div>
       ) : models.length === 0 ? (
-        <div className="text-center py-16">
-          <p className="text-gray-500 mb-4">
+        <div className="text-center py-20 glass rounded-2xl">
+          <p className="text-gray-400 mb-6 text-lg">
             {tab === "mine"
               ? "You haven't uploaded any models yet."
               : "No models available."}
@@ -99,7 +100,7 @@ export default function Dashboard() {
           {tab === "mine" && (
             <Link
               to="/upload"
-              className="text-indigo-600 font-medium hover:underline"
+              className="text-purple-400 hover:text-purple-300 font-medium underline underline-offset-4"
             >
               Upload your first model
             </Link>
@@ -108,7 +109,7 @@ export default function Dashboard() {
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {models.map((model) => (
-            <div key={model._id} className="relative">
+            <div key={model._id} className="relative group">
               <ModelCard model={model} />
               {tab === "mine" && (
                 <button
@@ -116,7 +117,7 @@ export default function Dashboard() {
                     e.preventDefault();
                     handleDelete(model.slug);
                   }}
-                  className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-500 transition"
+                  className="absolute top-4 right-4 p-2 bg-black/40 text-gray-400 hover:text-red-400 hover:bg-black/60 rounded-lg backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100 border border-white/5"
                   title="Delete model"
                 >
                   <FiTrash2 />
