@@ -311,13 +311,21 @@ export default function Upload() {
         {/* Model File */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
+<<<<<<< HEAD
             Model File (.h5 / .pt / .pth / .keras / .onnx) *
+=======
+            Model File (.h5) *
+>>>>>>> a20fd994f092fc0b92e95a4be4392fa53a99f6aa
           </label>
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-400 transition">
             <FiUploadCloud className="mx-auto text-3xl text-gray-400 mb-2" />
             <input
               type="file"
+<<<<<<< HEAD
               accept=".h5,.pt,.pth,.keras,.onnx"
+=======
+              accept=".h5"
+>>>>>>> a20fd994f092fc0b92e95a4be4392fa53a99f6aa
               onChange={(e) => setModelFile(e.target.files[0])}
               className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100"
             />

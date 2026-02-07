@@ -1,16 +1,23 @@
+# Node
 node_modules/
+npm-debug.log
+
+# Python
 __pycache__/
 *.pyc
-*.pyo
+.venv/
+env/
 
-.env
-server/.env
+# ML models
+*.pt
+*.h5
+*.pkl
+*.onnx
 
-.DS_Store
-.idea/
+# Uploads
 server/uploads/
 
-testing/
-
-package-lock.json
+# OS / Editor
+.DS_Store
+.vscode/
 

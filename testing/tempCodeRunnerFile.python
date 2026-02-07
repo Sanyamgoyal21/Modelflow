@@ -1,0 +1,36 @@
+import tensorflow as tf
+import numpy as np
+from tensorflow.keras.preprocessing import image
+
+# ----------------------------
+# STEP 1: LOAD SAVED MODEL
+# ----------------------------
+model = tf.keras.models.load_model('hand_gesture_model.h5')
+print("✅ Model loaded successfully!\n")
+
+# ----------------------------
+# STEP 2: DEFINE CLASS NAMES
+# ----------------------------
+# Must match your folder names
+class_names = ['blank', 'fist', 'five', 'ok', 'thumbsdown', 'thumbsup']
+
+# ----------------------------
+# STEP 3: GET IMAGE PATH
+# ----------------------------
+img_path = input("Enter image path: ")
+
+# ----------------------------
+# STEP 4: PREPROCESS IMAGE
+# ----------------------------
+img = image.load_img(img_path, target_size=(64, 64))
+img_array = image.img_to_array(img)
+img_array = np.expand_dims(img_array, axis=0) / 255.0
+
+# ----------------------------
+# STEP 5: MAKE PREDICTION
+# ----------------------------
+predictions = model.predict(img_array)
+predicted_class = class_names[np.argmax(predictions)]
+confidence = np.max(predictions) * 100
+
+print(f"\n🖐️ Predicted Gesture: {predicted_class} ({confidence:.2f}% confidence)\n")
