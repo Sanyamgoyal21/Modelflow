@@ -87,7 +87,7 @@ router.post(
   ]),
   async (req, res) => {
     try {
-      const { name, description } = req.body;
+      const { name, description, inputType, outputType } = req.body;
 
       if (!name || !req.files?.model) {
         return res.status(400).json({ error: "Model name and .h5 file are required" });
@@ -125,6 +125,8 @@ router.post(
         apiKey,
         s3ModelKey: modelKey,
         s3ReadmeKey: readmeKey,
+        inputType: inputType || "numeric",
+        outputType: outputType || "classification",
         inputSchema,
         inputCount: inputSchema.length,
       });
@@ -135,6 +137,8 @@ router.post(
         slug: model.slug,
         apiKey: model.apiKey,
         apiUrl: `/api/predict/${model.slug}`,
+        inputType: model.inputType,
+        outputType: model.outputType,
         inputSchema: model.inputSchema,
         message: "Model uploaded successfully",
       });

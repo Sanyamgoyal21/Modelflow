@@ -4,9 +4,114 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { FiUploadCloud } from "react-icons/fi";
 
+const INPUT_TYPES = [
+  { value: "image", label: "Image", desc: "Model takes image input (e.g., CNN, image classifier)" },
+  { value: "numeric", label: "Numeric Array", desc: "Model takes numeric features (e.g., [1.5, 2.3, 4.1])" },
+  { value: "text", label: "Single Text", desc: "Model takes text input (e.g., sentiment analysis)" },
+  { value: "multi_text", label: "Multiple Text Fields", desc: "Model takes multiple text inputs" },
+  { value: "csv", label: "CSV / Tabular", desc: "Model takes tabular data (rows and columns)" },
+  { value: "json", label: "JSON Data", desc: "Model takes arbitrary JSON structured data" },
+];
+
+const OUTPUT_TYPES = [
+  { value: "classification", label: "Classification", desc: "Returns class label + confidence" },
+  { value: "regression", label: "Regression", desc: "Returns numeric value(s)" },
+  { value: "text", label: "Text Output", desc: "Returns generated text" },
+  { value: "image", label: "Image Output", desc: "Returns generated/processed image" },
+  { value: "json", label: "Raw JSON", desc: "Returns raw prediction array" },
+];
+
+// Generate usage example based on input/output type
+function getUsageExample(baseUrl, apiUrl, apiKey, inputType) {
+  switch (inputType) {
+    case "image":
+      return `import requests
+
+# Send image file
+with open("your_image.png", "rb") as f:
+    response = requests.post(
+        "${baseUrl}${apiUrl}",
+        files={"image": ("image.png", f, "image/png")},
+        headers={"X-API-Key": "${apiKey}"},
+    )
+
+result = response.json()
+print(result)`;
+
+    case "text":
+      return `import requests
+
+response = requests.post(
+    "${baseUrl}${apiUrl}",
+    json={"text": "Your input text here"},
+    headers={"X-API-Key": "${apiKey}"}
+)
+
+print(response.json())`;
+
+    case "multi_text":
+      return `import requests
+
+response = requests.post(
+    "${baseUrl}${apiUrl}",
+    json={"texts": ["first text", "second text"]},
+    headers={"X-API-Key": "${apiKey}"}
+)
+
+print(response.json())`;
+
+    case "csv":
+      return `import requests
+
+# From CSV file
+with open("data.csv", "rb") as f:
+    response = requests.post(
+        "${baseUrl}${apiUrl}",
+        files={"csv": ("data.csv", f, "text/csv")},
+        headers={"X-API-Key": "${apiKey}"},
+    )
+
+# Or from string
+response = requests.post(
+    "${baseUrl}${apiUrl}",
+    json={"csv_data": "col1,col2\\n1.0,2.0\\n3.0,4.0"},
+    headers={"X-API-Key": "${apiKey}"}
+)
+
+print(response.json())`;
+
+    case "json":
+      return `import requests
+
+response = requests.post(
+    "${baseUrl}${apiUrl}",
+    json={"data": [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]},
+    headers={"X-API-Key": "${apiKey}"}
+)
+
+print(response.json())`;
+
+    default: // numeric
+      return `import requests
+
+response = requests.post(
+    "${baseUrl}${apiUrl}",
+    json={"inputs": [1.0, 2.0, 3.0]},
+    headers={"X-API-Key": "${apiKey}"}
+)
+
+print(response.json())`;
+  }
+}
+
 export default function Upload() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: "", description: "" });
+  const [form, setForm] = useState({
+    name: "",
+    description: "",
+    inputType: "image",
+    outputType: "classification",
+  });
   const [modelFile, setModelFile] = useState(null);
   const [readmeFile, setReadmeFile] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -24,6 +129,8 @@ export default function Upload() {
       const formData = new FormData();
       formData.append("name", form.name);
       formData.append("description", form.description);
+      formData.append("inputType", form.inputType);
+      formData.append("outputType", form.outputType);
       formData.append("model", modelFile);
       if (readmeFile) formData.append("readme", readmeFile);
 
@@ -32,7 +139,7 @@ export default function Upload() {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      setResult(res.data);
+      setResult({ ...res.data, inputType: form.inputType });
       toast.success("Model uploaded successfully!");
     } catch (err) {
       toast.error(err.response?.data?.error || "Upload failed");
@@ -43,6 +150,8 @@ export default function Upload() {
 
   if (result) {
     const baseUrl = window.location.origin;
+    const example = getUsageExample(baseUrl, result.apiUrl, result.apiKey, result.inputType);
+
     return (
       <div className="max-w-2xl mx-auto px-4 py-12">
         <div className="bg-white rounded-xl shadow-sm border p-8">
@@ -52,25 +161,34 @@ export default function Upload() {
 
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-gray-700">
-                Model Name
-              </label>
+              <label className="text-sm font-medium text-gray-700">Model Name</label>
               <p className="text-lg font-semibold">{result.name}</p>
             </div>
 
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <label className="text-sm font-medium text-gray-700">Input Type</label>
+                <p className="text-sm bg-blue-50 text-blue-700 px-3 py-1 rounded-full inline-block mt-1">
+                  {result.inputType}
+                </p>
+              </div>
+              <div className="flex-1">
+                <label className="text-sm font-medium text-gray-700">Output Type</label>
+                <p className="text-sm bg-green-50 text-green-700 px-3 py-1 rounded-full inline-block mt-1">
+                  {result.outputType}
+                </p>
+              </div>
+            </div>
+
             <div>
-              <label className="text-sm font-medium text-gray-700">
-                API Endpoint
-              </label>
+              <label className="text-sm font-medium text-gray-700">API Endpoint</label>
               <div className="bg-gray-900 text-green-400 p-4 rounded-lg text-sm font-mono mt-1">
                 POST {baseUrl}{result.apiUrl}
               </div>
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700">
-                API Key
-              </label>
+              <label className="text-sm font-medium text-gray-700">API Key</label>
               <div className="bg-gray-900 text-yellow-400 p-4 rounded-lg text-sm font-mono mt-1 break-all">
                 {result.apiKey}
               </div>
@@ -80,20 +198,9 @@ export default function Upload() {
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700">
-                Usage Example (Python)
-              </label>
+              <label className="text-sm font-medium text-gray-700">Usage Example (Python)</label>
               <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm mt-1 overflow-x-auto">
-{`import requests
-
-response = requests.post(
-    "${baseUrl}${result.apiUrl}",
-    json={"inputs": [${result.inputSchema?.map(() => "0.0").join(", ") || "1.0, 2.0, 3.0"}]},
-    headers={"X-API-Key": "${result.apiKey}"}
-)
-
-print(response.json())
-# {"model": "${result.name}", "prediction": [[...]]}`}
+                {example}
               </pre>
             </div>
           </div>
@@ -121,8 +228,8 @@ print(response.json())
     <div className="max-w-2xl mx-auto px-4 py-12">
       <h1 className="text-2xl font-bold mb-2">Upload a Model</h1>
       <p className="text-gray-500 mb-8">
-        Upload your Keras .h5 model and an optional README with input
-        descriptions.
+        Upload your Keras .h5 model. Select what type of input it expects and
+        what kind of output it produces.
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -135,7 +242,7 @@ print(response.json())
             required
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
-            placeholder="e.g. House Price Predictor"
+            placeholder="e.g. Hand Gesture Recognizer"
             className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           />
         </div>
@@ -153,6 +260,55 @@ print(response.json())
           />
         </div>
 
+        {/* Input Type */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Input Type *
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            {INPUT_TYPES.map((t) => (
+              <button
+                key={t.value}
+                type="button"
+                onClick={() => setForm({ ...form, inputType: t.value })}
+                className={`text-left p-3 rounded-lg border-2 transition ${
+                  form.inputType === t.value
+                    ? "border-indigo-500 bg-indigo-50"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <div className="font-medium text-sm">{t.label}</div>
+                <div className="text-xs text-gray-500 mt-0.5">{t.desc}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Output Type */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Output Type *
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            {OUTPUT_TYPES.map((t) => (
+              <button
+                key={t.value}
+                type="button"
+                onClick={() => setForm({ ...form, outputType: t.value })}
+                className={`text-left p-3 rounded-lg border-2 transition ${
+                  form.outputType === t.value
+                    ? "border-indigo-500 bg-indigo-50"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <div className="font-medium text-sm">{t.label}</div>
+                <div className="text-xs text-gray-500 mt-0.5">{t.desc}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Model File */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Model File (.h5) *
@@ -174,13 +330,13 @@ print(response.json())
           </div>
         </div>
 
+        {/* README */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             README File (.md / .txt)
           </label>
           <p className="text-xs text-gray-500 mb-2">
-            Include an "Inputs" section describing each input field your model
-            expects. This helps generate API documentation.
+            Optional. Include an "Inputs" section describing each input field.
           </p>
           <input
             type="file"

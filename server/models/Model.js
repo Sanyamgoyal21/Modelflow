@@ -18,6 +18,18 @@ const modelSchema = new mongoose.Schema(
     apiKey: { type: String, required: true, unique: true },
     s3ModelKey: { type: String, required: true },
     s3ReadmeKey: { type: String },
+    inputType: {
+      type: String,
+      enum: ["image", "text", "multi_text", "csv", "numeric", "json"],
+      default: "numeric",
+    },
+    outputType: {
+      type: String,
+      enum: ["classification", "regression", "text", "image", "json"],
+      default: "classification",
+    },
+    // For multi_text: names of each text field expected
+    // For numeric: names of each numeric feature
     inputSchema: [inputFieldSchema],
     inputCount: { type: Number, default: 0 },
     usageCount: { type: Number, default: 0 },

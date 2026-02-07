@@ -17,10 +17,10 @@ import requests
 # Local:   http://localhost:5000
 # Network: http://10.3.0.132:5000
 # Ngrok:   https://xxxx-xxxx.ngrok-free.app
-BASE_URL = "https://1e70-59-89-50-211.ngrok-free.app"
+BASE_URL = "https://7c05-59-89-50-211.ngrok-free.app"
 
-MODEL_SLUG = "hand-gesture-predictor-a8b9421b"
-API_KEY = "mlh_61bbd50c66b089f27e4623960209a39e13cd9ed8b48fc9ed"
+MODEL_SLUG = "hand-gesture-recognizer-66cced93"
+API_KEY = "mlh_8dd13d5cba1d30ea1c516dd79a7669cbe567b1e2f2529e91"
 API_URL = f"{BASE_URL}/api/predict/{MODEL_SLUG}"
 # -------------------------------------------------------
 
