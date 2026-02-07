@@ -6,10 +6,6 @@ from pathlib import Path
 from typing import Optional, Any
 
 import numpy as np
-<<<<<<< HEAD
-=======
-import tensorflow as tf
->>>>>>> a20fd994f092fc0b92e95a4be4392fa53a99f6aa
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -19,7 +15,6 @@ load_dotenv()
 
 app = FastAPI(title="ML Model Inference Service")
 
-<<<<<<< HEAD
 # In-memory model cache: stores (model_object, framework) tuples
 _loaded_models: dict[str, tuple] = {}
 
@@ -60,10 +55,6 @@ def get_yolo_class():
         from ultralytics import YOLO
         _ultralytics_YOLO = YOLO
     return _ultralytics_YOLO
-=======
-# In-memory model cache
-_loaded_models: dict[str, tf.keras.Model] = {}
->>>>>>> a20fd994f092fc0b92e95a4be4392fa53a99f6aa
 
 
 class PredictRequest(BaseModel):
@@ -71,10 +62,6 @@ class PredictRequest(BaseModel):
     model_key: str
     input_type: str = "numeric"
     output_type: str = "classification"
-<<<<<<< HEAD
-=======
-    # Different input fields depending on type
->>>>>>> a20fd994f092fc0b92e95a4be4392fa53a99f6aa
     inputs: Optional[list] = None
     image_base64: Optional[str] = None
     text: Optional[str] = None
@@ -85,7 +72,6 @@ class PredictRequest(BaseModel):
 
 # --------------- Model Loading ---------------
 
-<<<<<<< HEAD
 def detect_framework(model_path: str) -> str:
     """Detect which framework to use based on file extension."""
     ext = Path(model_path).suffix.lower()
@@ -101,15 +87,11 @@ def detect_framework(model_path: str) -> str:
 
 def load_model(model_path: str, model_key: str) -> tuple:
     """Load model and return (model, framework) tuple."""
-=======
-def load_model(model_path: str, model_key: str) -> tf.keras.Model:
->>>>>>> a20fd994f092fc0b92e95a4be4392fa53a99f6aa
     if model_key not in _loaded_models:
         print(f"Loading model from: {model_path}")
         if not Path(model_path).exists():
             raise FileNotFoundError(f"Model file not found: {model_path}")
 
-<<<<<<< HEAD
         framework = detect_framework(model_path)
 
         if framework == "keras":
@@ -165,28 +147,10 @@ def load_model(model_path: str, model_key: str) -> tf.keras.Model:
 
         _loaded_models[model_key] = (model, framework)
         print(f"  Framework: {framework}")
-=======
-        _loaded_models[model_key] = tf.keras.models.load_model(model_path)
-
-        m = _loaded_models[model_key]
-        try:
-            in_shape = m.input_shape
-        except AttributeError:
-            in_shape = m.inputs[0].shape if m.inputs else "unknown"
-        try:
-            out_shape = m.output_shape
-        except AttributeError:
-            out_shape = m.outputs[0].shape if m.outputs else "unknown"
-
-        print(f"Model loaded: {model_key}")
-        print(f"  Input shape:  {in_shape}")
-        print(f"  Output shape: {out_shape}")
->>>>>>> a20fd994f092fc0b92e95a4be4392fa53a99f6aa
 
     return _loaded_models[model_key]
 
 
-<<<<<<< HEAD
 def get_input_shape(model, framework: str):
     """Get model input shape regardless of framework."""
     if framework == "keras":
@@ -199,27 +163,15 @@ def get_input_shape(model, framework: str):
     else:
         # PyTorch doesn't store input shape — return None
         return None
-=======
-def get_input_shape(model):
-    try:
-        return model.input_shape
-    except AttributeError:
-        return model.inputs[0].shape
->>>>>>> a20fd994f092fc0b92e95a4be4392fa53a99f6aa
 
 
 # --------------- Input Preprocessors ---------------
 
-<<<<<<< HEAD
 def preprocess_image(image_base64: str, model, framework: str) -> np.ndarray:
-=======
-def preprocess_image(image_base64: str, model: tf.keras.Model) -> np.ndarray:
->>>>>>> a20fd994f092fc0b92e95a4be4392fa53a99f6aa
     """Decode base64 image, resize to model input shape, normalize."""
     image_bytes = base64.b64decode(image_base64)
     image = Image.open(io.BytesIO(image_bytes))
 
-<<<<<<< HEAD
     input_shape = get_input_shape(model, framework)
 
     if framework == "pytorch":
@@ -274,57 +226,20 @@ def preprocess_image(image_base64: str, model: tf.keras.Model) -> np.ndarray:
 
 
 def preprocess_numeric(inputs: list) -> np.ndarray:
-=======
-    input_shape = get_input_shape(model)
-    # input_shape: (batch, height, width, channels)
-    target_h = input_shape[1]
-    target_w = input_shape[2]
-    channels = input_shape[3] if len(input_shape) == 4 else 1
-
-    if channels == 1:
-        image = image.convert("L")
-    else:
-        image = image.convert("RGB")
-
-    if target_h and target_w:
-        image = image.resize((target_w, target_h))
-
-    img_array = np.array(image, dtype=np.float32) / 255.0
-
-    if channels == 1 and img_array.ndim == 2:
-        img_array = np.expand_dims(img_array, axis=-1)
-
-    img_array = np.expand_dims(img_array, axis=0)
-    return img_array
-
-
-def preprocess_numeric(inputs: list, model: tf.keras.Model) -> np.ndarray:
-    """Convert numeric list to numpy array with correct shape."""
->>>>>>> a20fd994f092fc0b92e95a4be4392fa53a99f6aa
     input_data = np.array(inputs, dtype=np.float32)
     if input_data.ndim == 1:
         input_data = input_data.reshape(1, -1)
     return input_data
 
 
-<<<<<<< HEAD
 def preprocess_csv(csv_data: str) -> np.ndarray:
     reader = csv.reader(io.StringIO(csv_data))
     rows = list(reader)
-=======
-def preprocess_csv(csv_data: str, model: tf.keras.Model) -> np.ndarray:
-    """Parse CSV string into numpy array for tabular models."""
-    reader = csv.reader(io.StringIO(csv_data))
-    rows = list(reader)
-
-    # Skip header if first row contains non-numeric values
->>>>>>> a20fd994f092fc0b92e95a4be4392fa53a99f6aa
     start = 0
     try:
         [float(x) for x in rows[0]]
     except (ValueError, IndexError):
         start = 1
-<<<<<<< HEAD
     data = [[float(x) for x in row] for row in rows[start:]]
     return np.array(data, dtype=np.float32)
 
@@ -377,48 +292,15 @@ def run_prediction(model, framework: str, input_data, output_type: str = "classi
 
     else:
         raise ValueError(f"Unknown framework: {framework}")
-=======
-
-    data = []
-    for row in rows[start:]:
-        data.append([float(x) for x in row])
-
-    input_data = np.array(data, dtype=np.float32)
-    return input_data
-
-
-def preprocess_text(text: str) -> np.ndarray:
-    """
-    Basic text preprocessing. For real NLP models, you'd want
-    tokenization matching the model's training (e.g., tokenizer.json).
-    This provides a basic approach that works for simple models.
-    """
-    # Return as-is — the model.predict will need to handle string input
-    # or we can do basic character/word encoding
-    return text
-
-
-def preprocess_multi_text(texts: list[str]) -> list[str]:
-    """Multiple text inputs for models that take multiple string fields."""
-    return texts
->>>>>>> a20fd994f092fc0b92e95a4be4392fa53a99f6aa
 
 
 # --------------- Output Formatters ---------------
 
 def format_classification(prediction: np.ndarray) -> dict:
-<<<<<<< HEAD
-=======
-    """Format classification output with class and confidence."""
->>>>>>> a20fd994f092fc0b92e95a4be4392fa53a99f6aa
     result = {"prediction": prediction.tolist()}
     if prediction.ndim >= 2 and prediction.shape[-1] > 1:
         result["predicted_class"] = int(np.argmax(prediction, axis=-1)[0])
         result["confidence"] = round(float(np.max(prediction)), 4)
-<<<<<<< HEAD
-=======
-        # Top 5 classes
->>>>>>> a20fd994f092fc0b92e95a4be4392fa53a99f6aa
         if prediction.shape[-1] > 5:
             top_indices = np.argsort(prediction[0])[::-1][:5]
             result["top_5"] = [
@@ -426,10 +308,6 @@ def format_classification(prediction: np.ndarray) -> dict:
                 for idx in top_indices
             ]
     elif prediction.ndim >= 1:
-<<<<<<< HEAD
-=======
-        # Binary classification (single output neuron)
->>>>>>> a20fd994f092fc0b92e95a4be4392fa53a99f6aa
         prob = float(prediction.flat[0])
         result["predicted_class"] = 1 if prob > 0.5 else 0
         result["confidence"] = round(prob if prob > 0.5 else 1 - prob, 4)
@@ -437,7 +315,6 @@ def format_classification(prediction: np.ndarray) -> dict:
 
 
 def format_regression(prediction: np.ndarray) -> dict:
-<<<<<<< HEAD
     values = prediction.flatten().tolist()
     return {"prediction": values, "value": values[0] if len(values) == 1 else values}
 
@@ -447,54 +324,18 @@ def format_text_output(prediction: np.ndarray) -> dict:
 
 
 def format_image_output(prediction: np.ndarray) -> dict:
-=======
-    """Format regression output as values."""
-    values = prediction.flatten().tolist()
-    return {
-        "prediction": values,
-        "value": values[0] if len(values) == 1 else values,
-    }
-
-
-def format_text_output(prediction: np.ndarray) -> dict:
-    """Format text output (e.g., from sequence models)."""
-    return {
-        "prediction": prediction.tolist(),
-    }
-
-
-def format_image_output(prediction: np.ndarray) -> dict:
-    """Format image output as base64 (e.g., from GANs, style transfer)."""
-    # Denormalize if values are in [0,1]
->>>>>>> a20fd994f092fc0b92e95a4be4392fa53a99f6aa
     if prediction.max() <= 1.0:
         img_data = (prediction * 255).astype(np.uint8)
     else:
         img_data = prediction.astype(np.uint8)
-<<<<<<< HEAD
     if img_data.ndim == 4:
         img_data = img_data[0]
     if img_data.ndim == 3 and img_data.shape[-1] == 1:
         img_data = img_data.squeeze(-1)
-=======
-
-    # Remove batch dimension
-    if img_data.ndim == 4:
-        img_data = img_data[0]
-
-    # Handle single channel
-    if img_data.ndim == 3 and img_data.shape[-1] == 1:
-        img_data = img_data.squeeze(-1)
-
->>>>>>> a20fd994f092fc0b92e95a4be4392fa53a99f6aa
     image = Image.fromarray(img_data)
     buffer = io.BytesIO()
     image.save(buffer, format="PNG")
     img_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
-<<<<<<< HEAD
-=======
-
->>>>>>> a20fd994f092fc0b92e95a4be4392fa53a99f6aa
     return {
         "prediction": "image",
         "image_base64": img_base64,
@@ -503,10 +344,6 @@ def format_image_output(prediction: np.ndarray) -> dict:
 
 
 def format_json_output(prediction: np.ndarray) -> dict:
-<<<<<<< HEAD
-=======
-    """Generic JSON output."""
->>>>>>> a20fd994f092fc0b92e95a4be4392fa53a99f6aa
     return {"prediction": prediction.tolist()}
 
 
@@ -524,7 +361,6 @@ OUTPUT_FORMATTERS = {
 @app.post("/predict")
 async def predict(request: PredictRequest):
     try:
-<<<<<<< HEAD
         model, framework = load_model(request.model_path, request.model_key)
         input_type = request.input_type
 
@@ -541,51 +377,23 @@ async def predict(request: PredictRequest):
             else:
                 input_data = preprocess_image(request.image_base64, model, framework)
                 print(f"Image preprocessed to shape: {input_data.shape}")
-=======
-        model = load_model(request.model_path, request.model_key)
-
-        # Preprocess input based on type
-        input_type = request.input_type
-
-        if input_type == "image":
-            if not request.image_base64:
-                raise ValueError("No image_base64 provided for image input model.")
-            input_data = preprocess_image(request.image_base64, model)
-            print(f"Image preprocessed to shape: {input_data.shape}")
->>>>>>> a20fd994f092fc0b92e95a4be4392fa53a99f6aa
 
         elif input_type == "text":
             if not request.text:
                 raise ValueError("No text provided for text input model.")
-<<<<<<< HEAD
             input_data = np.array([request.text])
             print(f"Text input length: {len(request.text)}")
-=======
-            # For text models, we pass text directly — model should handle tokenization
-            # or we do basic encoding
-            input_data = preprocess_text(request.text)
-            print(f"Text input: {input_data[:100]}...")
->>>>>>> a20fd994f092fc0b92e95a4be4392fa53a99f6aa
 
         elif input_type == "multi_text":
             if not request.texts:
                 raise ValueError("No texts provided for multi_text input model.")
-<<<<<<< HEAD
             input_data = np.array(request.texts)
             print(f"Multi-text input: {len(request.texts)} fields")
-=======
-            input_data = preprocess_multi_text(request.texts)
-            print(f"Multi-text input: {len(input_data)} fields")
->>>>>>> a20fd994f092fc0b92e95a4be4392fa53a99f6aa
 
         elif input_type == "csv":
             if not request.csv_data:
                 raise ValueError("No csv_data provided for CSV input model.")
-<<<<<<< HEAD
             input_data = preprocess_csv(request.csv_data)
-=======
-            input_data = preprocess_csv(request.csv_data, model)
->>>>>>> a20fd994f092fc0b92e95a4be4392fa53a99f6aa
             print(f"CSV preprocessed to shape: {input_data.shape}")
 
         elif input_type == "json":
@@ -599,7 +407,6 @@ async def predict(request: PredictRequest):
         else:  # numeric
             if request.inputs is None:
                 raise ValueError("No inputs provided for numeric input model.")
-<<<<<<< HEAD
             input_data = preprocess_numeric(request.inputs)
             print(f"Numeric input shape: {input_data.shape}")
 
@@ -615,25 +422,6 @@ async def predict(request: PredictRequest):
         formatter = OUTPUT_FORMATTERS.get(request.output_type, format_json_output)
         response = formatter(prediction)
         response["framework"] = framework
-=======
-            input_data = preprocess_numeric(request.inputs, model)
-            print(f"Numeric input shape: {input_data.shape}")
-
-        # Run prediction
-        # For text models, the model might need special handling
-        if isinstance(input_data, (str, list)) and input_type in ("text", "multi_text"):
-            # Text-based models need their own predict path
-            # Try using model directly — this works for TF text models
-            if isinstance(input_data, str):
-                input_data = [input_data]
-            prediction = model.predict(np.array(input_data), verbose=0)
-        else:
-            prediction = model.predict(input_data, verbose=0)
-
-        # Format output based on output type
-        formatter = OUTPUT_FORMATTERS.get(request.output_type, format_json_output)
-        response = formatter(prediction)
->>>>>>> a20fd994f092fc0b92e95a4be4392fa53a99f6aa
 
         return response
 
@@ -647,7 +435,6 @@ async def predict(request: PredictRequest):
 
 @app.get("/health")
 async def health():
-<<<<<<< HEAD
     frameworks = []
     try:
         get_tf()
@@ -676,12 +463,6 @@ async def health():
         "status": "ok",
         "cached_models": len(_loaded_models),
         "frameworks": frameworks,
-=======
-    return {
-        "status": "ok",
-        "cached_models": len(_loaded_models),
-        "tensorflow_version": tf.__version__,
->>>>>>> a20fd994f092fc0b92e95a4be4392fa53a99f6aa
     }
 
 

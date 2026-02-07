@@ -1,19 +1,12 @@
 fastapi==0.109.0
 uvicorn==0.27.0
-<<<<<<< HEAD
-=======
-tensorflow>=2.16.0
->>>>>>> a20fd994f092fc0b92e95a4be4392fa53a99f6aa
 numpy==1.26.3
 Pillow==10.2.0
 h5py>=3.10.0
 python-dotenv==1.0.1
-<<<<<<< HEAD
 
 # ML Frameworks (install the ones you need)
 tensorflow>=2.16.0
 torch>=2.0.0
 onnxruntime>=1.16.0
 ultralytics>=8.0.0
-=======
->>>>>>> a20fd994f092fc0b92e95a4be4392fa53a99f6aa
