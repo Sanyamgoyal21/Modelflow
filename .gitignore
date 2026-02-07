@@ -6,7 +6,7 @@ npm-debug.log
 __pycache__/
 *.pyc
 .venv/
-env/
+.env/
 
 # ML models
 *.pt
