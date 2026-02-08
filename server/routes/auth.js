@@ -14,20 +14,29 @@ router.get(
 // Google OAuth callback
 router.get(
   "/google/callback",
-  passport.authenticate("google", { session: false, failureRedirect: "/login" }),
+  passport.authenticate("google", {
+    session: false,
+    failureRedirect: "/login",
+  }),
   (req, res) => {
-    const token = jwt.sign({ userId: req.user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    if (!process.env.JWT_SECRET || !process.env.CLIENT_URL) {
+      return res.status(500).json({ error: "Server misconfiguration" });
+    }
+
+    const token = jwt.sign(
+      { userId: req.user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    res.redirect(process.env.CLIENT_URL + "/dashboard");
+    res.redirect(`${process.env.CLIENT_URL}/dashboard`);
   }
 );
 

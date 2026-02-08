@@ -3,7 +3,11 @@ const mongoose = require("mongoose");
 const inputFieldSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
-    type: { type: String, enum: ["number", "text", "array"], default: "number" },
+    type: {
+      type: String,
+      enum: ["number", "text", "array"],
+      default: "number",
+    },
     description: { type: String, default: "" },
   },
   { _id: false }
@@ -11,7 +15,12 @@ const inputFieldSchema = new mongoose.Schema(
 
 const modelSchema = new mongoose.Schema(
   {
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
     name: { type: String, required: true },
     description: { type: String, default: "" },
     slug: { type: String, required: true, unique: true },
@@ -28,14 +37,15 @@ const modelSchema = new mongoose.Schema(
       enum: ["classification", "regression", "text", "image", "json"],
       default: "classification",
     },
-    // For multi_text: names of each text field expected
-    // For numeric: names of each numeric feature
     inputSchema: [inputFieldSchema],
     inputCount: { type: Number, default: 0 },
     usageCount: { type: Number, default: 0 },
     isPublic: { type: Boolean, default: true },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    collection: "models",
+  }
 );
 
 module.exports = mongoose.model("Model", modelSchema);

@@ -5,8 +5,7 @@ Pillow==10.2.0
 h5py>=3.10.0
 python-dotenv==1.0.1
 
-# ML Frameworks (install the ones you need)
-tensorflow>=2.16.0
-torch>=2.0.0
+# CPU-only ML frameworks
+tensorflow-cpu>=2.16.0
 onnxruntime>=1.16.0
 ultralytics>=8.0.0

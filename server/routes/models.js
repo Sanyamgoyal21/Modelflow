@@ -3,19 +3,27 @@ const multer = require("multer");
 const crypto = require("crypto");
 const { authenticate } = require("../middleware/auth");
 const Model = require("../models/Model");
-const { uploadToS3, deleteFromS3, getSignedDownloadUrl } = require("../config/s3");
+const {
+  uploadToS3,
+  deleteFromS3,
+  getSignedDownloadUrl,
+} = require("../config/s3");
 
 const router = express.Router();
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 500 * 1024 * 1024 }, // 500MB max
+  limits: { fileSize: 500 * 1024 * 1024 }, // 500MB
   fileFilter: (req, file, cb) => {
     if (file.fieldname === "model") {
       const allowed = [".h5", ".pt", ".pth", ".keras", ".onnx"];
-      const ext = file.originalname.substring(file.originalname.lastIndexOf(".")).toLowerCase();
+      const ext = file.originalname
+        .substring(file.originalname.lastIndexOf("."))
+        .toLowerCase();
       if (!allowed.includes(ext)) {
-        return cb(new Error(`Unsupported model format. Allowed: ${allowed.join(", ")}`));
+        return cb(
+          new Error(`Unsupported model format. Allowed: ${allowed.join(", ")}`)
+        );
       }
     }
     cb(null, true);
@@ -52,9 +60,6 @@ function parseReadmeForInputs(readmeContent) {
       continue;
     }
     if (inInputSection) {
-      // Match patterns like: - feature_name (number): description
-      // or: - feature_name: description
-      // or: | feature_name | number | description |
       const bulletMatch = line.match(
         /^[\s]*[-*]\s*(\w+)\s*(?:\((\w+)\))?\s*[:\-]?\s*(.*)/
       );
@@ -68,7 +73,11 @@ function parseReadmeForInputs(readmeContent) {
           type: bulletMatch[2] || "number",
           description: bulletMatch[3]?.trim() || "",
         });
-      } else if (tableMatch && tableMatch[1] !== "---" && tableMatch[1].toLowerCase() !== "name") {
+      } else if (
+        tableMatch &&
+        tableMatch[1] !== "---" &&
+        tableMatch[1].toLowerCase() !== "name"
+      ) {
         inputs.push({
           name: tableMatch[1],
           type: tableMatch[2] || "number",
@@ -81,7 +90,7 @@ function parseReadmeForInputs(readmeContent) {
   return inputs;
 }
 
-// Upload a new model
+// Upload model
 router.post(
   "/",
   authenticate,
@@ -94,27 +103,36 @@ router.post(
       const { name, description, inputType, outputType } = req.body;
 
       if (!name || !req.files?.model) {
-        return res.status(400).json({ error: "Model name and .h5 file are required" });
+        return res
+          .status(400)
+          .json({ error: "Model name and model file are required" });
       }
 
       const slug = generateSlug(name);
       const apiKey = generateApiKey();
 
-      // Upload model file to S3
       const modelKey = `models/${slug}/${req.files.model[0].originalname}`;
-      await uploadToS3(req.files.model[0].buffer, modelKey, "application/octet-stream");
+      await uploadToS3(
+        req.files.model[0].buffer,
+        modelKey,
+        "application/octet-stream"
+      );
 
-      // Upload README if provided and parse inputs
       let readmeKey = null;
       let inputSchema = [];
+
       if (req.files.readme) {
         readmeKey = `models/${slug}/README.md`;
-        await uploadToS3(req.files.readme[0].buffer, readmeKey, "text/markdown");
-        const readmeContent = req.files.readme[0].buffer.toString("utf-8");
-        inputSchema = parseReadmeForInputs(readmeContent);
+        await uploadToS3(
+          req.files.readme[0].buffer,
+          readmeKey,
+          "text/markdown"
+        );
+        inputSchema = parseReadmeForInputs(
+          req.files.readme[0].buffer.toString("utf-8")
+        );
       }
 
-      // Parse inputSchema from body if provided directly
       if (req.body.inputSchema) {
         try {
           inputSchema = JSON.parse(req.body.inputSchema);
@@ -146,14 +164,13 @@ router.post(
         inputSchema: model.inputSchema,
         message: "Model uploaded successfully",
       });
-    } catch (error) {
-      console.error("Upload error:", error);
+    } catch {
       res.status(500).json({ error: "Failed to upload model" });
     }
   }
 );
 
-// Get all public models
+// Public models
 router.get("/", async (req, res) => {
   try {
     const models = await Model.find({ isPublic: true })
@@ -162,24 +179,24 @@ router.get("/", async (req, res) => {
       .select("-apiKey -s3ModelKey -s3ReadmeKey");
 
     res.json(models);
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: "Failed to fetch models" });
   }
 });
 
-// Get current user's models
+// My models
 router.get("/mine", authenticate, async (req, res) => {
   try {
     const models = await Model.find({ userId: req.user._id }).sort({
       createdAt: -1,
     });
     res.json(models);
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: "Failed to fetch models" });
   }
 });
 
-// Get single model by slug
+// Get model
 router.get("/:slug", async (req, res) => {
   try {
     const model = await Model.findOne({ slug: req.params.slug })
@@ -190,39 +207,52 @@ router.get("/:slug", async (req, res) => {
       return res.status(404).json({ error: "Model not found" });
     }
 
-    // Only show apiKey to the owner
     const result = model.toObject();
-    if (!req.cookies?.token) {
-      delete result.apiKey;
-    } else {
-      const jwt = require("jsonwebtoken");
+
+    // Hide API key by default
+    delete result.apiKey;
+
+    // If user is logged in, decide visibility
+    if (req.cookies?.token) {
       try {
-        const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
-        if (decoded.userId !== model.userId._id.toString()) {
-          delete result.apiKey;
+        const jwt = require("jsonwebtoken");
+        const decoded = jwt.verify(
+          req.cookies.token,
+          process.env.JWT_SECRET
+        );
+
+        // Show API key if:
+        // 1. Model is public
+        // 2. OR user is the owner
+        if (
+          model.isPublic === true ||
+          decoded.userId === model.userId._id.toString()
+        ) {
+          result.apiKey = model.apiKey;
         }
       } catch {
-        delete result.apiKey;
+        // invalid token → keep API key hidden
       }
     }
 
     res.json(result);
-  } catch (error) {
+  } catch (err) {
     res.status(500).json({ error: "Failed to fetch model" });
   }
 });
 
-// Get README content
+
+// README
 router.get("/:slug/readme", async (req, res) => {
   try {
     const model = await Model.findOne({ slug: req.params.slug });
-    if (!model || !model.s3ReadmeKey) {
+    if (!model?.s3ReadmeKey) {
       return res.status(404).json({ error: "README not found" });
     }
 
-    const readmeUrl = await getSignedDownloadUrl(model.s3ReadmeKey);
-    res.json({ url: readmeUrl });
-  } catch (error) {
+    const url = await getSignedDownloadUrl(model.s3ReadmeKey);
+    res.json({ url });
+  } catch {
     res.status(500).json({ error: "Failed to fetch README" });
   }
 });
@@ -236,17 +266,18 @@ router.delete("/:slug", authenticate, async (req, res) => {
     });
 
     if (!model) {
-      return res.status(404).json({ error: "Model not found or unauthorized" });
+      return res
+        .status(404)
+        .json({ error: "Model not found or unauthorized" });
     }
 
     await deleteFromS3(model.s3ModelKey);
-    if (model.s3ReadmeKey) {
-      await deleteFromS3(model.s3ReadmeKey);
-    }
+    if (model.s3ReadmeKey) await deleteFromS3(model.s3ReadmeKey);
+
     await Model.deleteOne({ _id: model._id });
 
     res.json({ message: "Model deleted successfully" });
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: "Failed to delete model" });
   }
 });
