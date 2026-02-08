@@ -102,7 +102,7 @@ def load_model(model_path: str, model_key: str):
 
     if framework == "keras":
         tf = get_tf()
-        model = tf.keras.models.load_model(model_path)
+        model = tf.keras.models.load_model(model_path, compile=False)
 
     elif framework == "pytorch":
         try:

@@ -18,7 +18,7 @@ import os
 # Local:   http://localhost:5000
 # Network: http://10.3.0.132:5000
 # Ngrok:   https://xxxx-xxxx.ngrok-free.app
-BASE_URL = "https://963d-59-89-50-211.ngrok-free.app/"
+BASE_URL = "https://7c05-59-89-50-211.ngrok-free.app"
 
 MODEL_SLUG = "object-detection-101fea1a"
 API_KEY = "mlh_79c7ef3377c658ba45e351c42e5dad9cdab81e8180bbe161"

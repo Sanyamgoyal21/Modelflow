@@ -1,31 +1,48 @@
 """
-Test script - simulates User B calling the prediction API with an image.
+Test script - simulates User B calling the prediction API with an image
+and maps prediction probabilities to class labels.
 
 Usage:
-    python test_predict.py <path_to_image>
-
-Example:
-    python test_predict.py hand_gesture.jpg
+    python test_predict_handgesture_with_labels.py <path_to_image>
 """
 
 import sys
 import base64
 import requests
+import numpy as np
 
-# ---- CONFIGURATION ----
-# Change BASE_URL to the ngrok URL or server IP when running from another machine
-# Local:   http://localhost:5000
-# Network: http://10.3.0.132:5000
-# Ngrok:   https://xxxx-xxxx.ngrok-free.app
-BASE_URL = "https://7c05-59-89-50-211.ngrok-free.app"
-
-MODEL_SLUG = "hand-gesture-predictor-a8b9421b"
-API_KEY = "mlh_61bbd50c66b089f27e4623960209a39e13cd9ed8b48fc9ed"
+# ---------------- CONFIGURATION ----------------
+BASE_URL = "https://unsubdivided-yuriko-valval.ngrok-free.dev"
+MODEL_SLUG = "handgesture-dhairya-69bc2472"
+API_KEY = "mlh_08851354c388ec860391d56c6ac13a5038bd822d5646af90"
 API_URL = f"{BASE_URL}/api/predict/{MODEL_SLUG}"
-# -------------------------------------------------------
+
+# 👇 CLASS LABELS
+class_names = ['blank', 'fist', 'five', 'ok', 'thumbsdown', 'thumbsup']
+# ------------------------------------------------
+
+
+def display_prediction(prediction):
+    """
+    Convert raw prediction probabilities into readable labels.
+    """
+    probs = np.array(prediction)
+
+    # Get best prediction
+    best_index = np.argmax(probs)
+    best_label = class_names[best_index]
+    best_confidence = probs[best_index] * 100
+
+    print("\n✅ PREDICTION RESULT")
+    print(f"Predicted Gesture : {best_label}")
+    print(f"Confidence        : {best_confidence:.2f}%")
+
+    print("\n📊 All Class Probabilities:")
+    for label, prob in zip(class_names, probs):
+        print(f"  {label:<12}: {prob*100:.2f}%")
+
 
 def predict_with_image_file(image_path):
-    """Method 1: Send image as multipart file upload"""
     print(f"\n--- Method 1: File Upload ---")
     print(f"Sending image: {image_path}")
     print(f"API URL: {API_URL}")
@@ -39,12 +56,16 @@ def predict_with_image_file(image_path):
         )
 
     print(f"Status: {response.status_code}")
-    print(f"Response: {response.json()}")
-    return response.json()
+    result = response.json()
+
+    if "prediction" in result:
+        display_prediction(result["prediction"][0])
+    else:
+        print("❌ Prediction not found in response")
+        print(result)
 
 
 def predict_with_base64(image_path):
-    """Method 2: Send image as base64 in JSON body"""
     print(f"\n--- Method 2: Base64 JSON ---")
     print(f"Encoding image: {image_path}")
 
@@ -62,19 +83,22 @@ def predict_with_base64(image_path):
     )
 
     print(f"Status: {response.status_code}")
-    print(f"Response: {response.json()}")
-    return response.json()
+    result = response.json()
+
+    if "prediction" in result:
+        display_prediction(result["prediction"][0])
+    else:
+        print("❌ Prediction not found in response")
+        print(result)
 
 
+# ---------------- MAIN ----------------
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python test_predict.py <path_to_image>")
-        print("Example: python test_predict.py hand_gesture.jpg")
+        print("Usage: python test_predict_handgesture_with_labels.py <path_to_image>")
         sys.exit(1)
 
-    # Join all args in case path has spaces and wasn't quoted
     image_path = " ".join(sys.argv[1:])
 
-    # Test both methods
     predict_with_image_file(image_path)
     predict_with_base64(image_path)
